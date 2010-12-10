@@ -141,10 +141,11 @@ XS(growl_register) {
     }
 
     NSDictionary* info = [NSDictionary dictionaryWithObjectsAndKeys:
-                                            [NSNumber numberWithInt:1], GROWL_TICKET_VERSION,
-                                            appName,                    GROWL_APP_NAME,
-                                            all,                        GROWL_NOTIFICATIONS_ALL,
-                                            defaults,                   GROWL_NOTIFICATIONS_DEFAULT,
+                                            [NSNumber numberWithInt:1],     GROWL_TICKET_VERSION,
+                                            @"org.unknownplace.cocoagrowl", GROWL_APP_ID,
+                                            appName,                        GROWL_APP_NAME,
+                                            all,                            GROWL_NOTIFICATIONS_ALL,
+                                            defaults,                       GROWL_NOTIFICATIONS_DEFAULT,
                                        nil];
 
     [[Growl sharedInstance] setInfo:info];
