@@ -4,7 +4,11 @@
 #include "ppport.h"
 
 #import <Foundation/Foundation.h>
+#ifdef USE_LOCAL_GROWL
+#import <Growl/Growl.h>
+#else
 #import <Growl.h>
+#endif
 #import <objc/runtime.h>
 
 static Class GrowlAppBridge;
@@ -203,19 +207,22 @@ XS(boot_Cocoa__Growl) {
 
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
-    NSBundle* growl = [NSBundle bundleWithPath:[NSString stringWithUTF8String:d]];
-    NSError* err = nil;
-    if (growl && [growl loadAndReturnError:&err]) {
-        //NSLog(@"growl load success");
-        GrowlAppBridge = objc_getClass("GrowlApplicationBridge");
-    }
-    else {
-        if (nil != err) {
-            Perl_croak(aTHX_ "Coudn't load Growl framework: %s\n",
-                [[err localizedDescription] UTF8String]);
+    GrowlAppBridge = objc_getClass("GrowlApplicationBridge");
+    if (!GrowlAppBridge) {
+        NSBundle* growl = [NSBundle bundleWithPath:[NSString stringWithUTF8String:d]];
+        NSError* err = nil;
+        if (growl && [growl loadAndReturnError:&err]) {
+            //NSLog(@"growl load success");
+            GrowlAppBridge = objc_getClass("GrowlApplicationBridge");
         }
         else {
-            Perl_croak(aTHX_ "Coudn't initialize Growl bundle\n");
+            if (nil != err) {
+                Perl_croak(aTHX_ "Coudn't load Growl framework: %s\n",
+                    [[err localizedDescription] UTF8String]);
+            }
+            else {
+                Perl_croak(aTHX_ "Coudn't initialize Growl bundle\n");
+            }
         }
     }
 

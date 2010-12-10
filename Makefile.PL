@@ -1,4 +1,6 @@
 use inc::Module::Install;
+use File::Spec;
+
 name 'Cocoa-Growl';
 all_from 'lib/Cocoa/Growl.pm';
 
@@ -9,13 +11,29 @@ author_tests('xt');
 
 use_ppport '3.19';
 cc_append_to_libs '-lobjc';
-cc_append_to_ccflags sprintf '-I%s', File::Spec->catfile('share', 'Growl.framework', 'Headers');
 
-makemaker_args->{dynamic_lib} = {
-    OTHERLDFLAGS => '-framework Foundation -framework Cocoa',
-};
+my $use_local_framework;
+if ($use_local_framework = (grep(/USE_LOCAL_GROWL_FRAMEWORK=.*/, @ARGV))[0] ) {
+    $use_local_framework =~ s/.*?=//;
+}
+@ARGV = grep !/USE_LOCAL_GROWL_FRAMEWORK/, @ARGV;
 
-install_share;
+if ($use_local_framework) {
+    cc_append_to_ccflags '-DUSE_LOCAL_GROWL';
+
+    makemaker_args->{dynamic_lib} = {
+        OTHERLDFLAGS => '-framework Foundation -framework Growl',
+    };
+}
+else {
+    cc_append_to_ccflags sprintf '-I%s', File::Spec->catfile('share', 'Growl.framework', 'Headers');
+
+    makemaker_args->{dynamic_lib} = {
+        OTHERLDFLAGS => '-framework Foundation',
+    };
+
+    install_share;
+}
 
 {
     # http://www.mail-archive.com/makemaker@perl.org/msg02823.html
