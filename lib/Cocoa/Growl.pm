@@ -6,7 +6,7 @@ use parent 'Exporter';
 use XSLoader;
 use URI;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 our @EXPORT_OK   = qw(growl_installed growl_running growl_register growl_notify);
 our %EXPORT_TAGS = (all => \@EXPORT_OK);
@@ -79,7 +79,7 @@ Cocoa::Growl - Yet another growl module using Growl.framework
     
     # register application
     growl_register(
-        name          => 'My growl script',
+        app           => 'My growl script',
         icon          => '/path/to/icon.png', # or 'http://url/to/icon'
         notifications => [qw(Notification1 Notification2)],
     );
@@ -95,7 +95,8 @@ Cocoa::Growl - Yet another growl module using Growl.framework
 
 =head1 FUNCTIONS
 
-All functions 
+No function is exported by default, but all functions is exportable.
+And ':all' tag export all functions.
 
 =head2 growl_installed
 
@@ -114,7 +115,7 @@ Return true value if growl is running.
 Register application to growl.
 
     growl_register(
-        name          => 'My growl script',
+        app           => 'My growl script',
         icon          => '/path/to/icon.png', # or 'http://url/to/icon'
         notifications => [qw(Notification1 Notification2)],
     );
