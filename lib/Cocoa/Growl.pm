@@ -27,11 +27,20 @@ sub growl_notify {
     my $title       = $info{title} || '';
     my $description = $info{description} || '';
     my $notifName   = $info{notificationName} || '';
+    my $icon        = $info{icon};
+    my $sticky      = $info{sticky};
+    my $priority    = $info{priority} || 0;
 
     my $on_click   = $info{onClick};
     my $on_timeout = $info{onTimeout};
 
-    _growl_notify($title, $description, $notifName, undef, $on_click, $on_timeout);
+    if ($icon) {
+        my $uri = URI->new($icon);
+        $uri->scheme or do { $uri->scheme('file'); $uri->host('') };
+        $icon = $uri->as_string;
+    }
+
+    _growl_notify($title, $description, $notifName, $icon, $on_click, $on_timeout, $sticky, $priority);
 }
 
 sub growl_register {

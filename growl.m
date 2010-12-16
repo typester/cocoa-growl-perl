@@ -275,17 +275,26 @@ XS(growl_notify) {
     dXSARGS;
 
     if (items < 3) {
-        Perl_croak(aTHX_ "Usage: _growl_notify($title, $description, $name[, $icon, $click_callback, $timeout_callback])");
+        Perl_croak(aTHX_ "Usage: _growl_notify($title, $description, $name[, $icon, $click_callback, $timeout_callback, $sticky, $priority])");
     }
 
     SV* sv_title = ST(0);
     SV* sv_desc  = ST(1);
     SV* sv_name  = ST(2);
 
+    SV* sv_icon = NULL;
+    if (items >= 4 && SvOK(ST(3))) sv_icon = ST(3);
+
     SV* sv_click_callback = NULL;
     SV* sv_timeout_callback = NULL;
     if (items >= 5 && SvOK(ST(4))) sv_click_callback = ST(4);
     if (items >= 6 && SvOK(ST(5))) sv_timeout_callback = ST(5);
+
+    SV* sv_sticky = NULL;
+    if (items >= 7 && SvOK(ST(6))) sv_sticky = ST(6);
+
+    SV* sv_priority = NULL;
+    if (items >= 8 && SvOK(ST(7))) sv_priority = ST(7);
 
     STRLEN len;
     char* s;
@@ -315,12 +324,26 @@ XS(growl_notify) {
         context_key = [[Growl sharedInstance] addContext:context];
     }
 
+    NSData* icon = nil;
+    if (sv_icon && SvOK(sv_icon)) {
+        s = SvPV(sv_icon, len);
+        NSString* iconFile = [NSString stringWithUTF8String:s];
+        NSURL* url = [NSURL URLWithString:iconFile];
+        icon = [NSData dataWithContentsOfURL:url];
+    }
+
+    BOOL sticky = NO;
+    if (sv_sticky && SvIV(sv_sticky)) sticky = YES;
+
+    int priority = 0;
+    if (sv_priority) priority = SvIV(sv_priority);
+
     [GrowlAppBridge notifyWithTitle:title
                         description:description
                    notificationName:name
-                           iconData:nil
-                           priority:0
-                           isSticky:NO
+                           iconData:icon
+                           priority:priority
+                           isSticky:sticky
                        clickContext:context_key];
 
     [pool drain];
