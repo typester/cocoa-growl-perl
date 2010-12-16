@@ -1,6 +1,16 @@
 use inc::Module::Install;
 use File::Spec;
 
+{
+    # check OS and version
+    die 'OS unsupported' unless ($^O eq 'darwin');
+
+    my @ver = map { chomp; $_ } split /\./, `sw_vers -productVersion`;
+    my $ver = sprintf '%d.%03d%03d', @ver;
+
+    die 'OS unsupported' unless $ver ge '10.005';
+}
+
 name 'Cocoa-Growl';
 all_from 'lib/Cocoa/Growl.pm';
 
