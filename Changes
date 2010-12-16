@@ -1,4 +1,5 @@
 Revision history for Perl extension Cocoa::Growl
 
-  0.01  Fri Dec 10 11:12:09 2010
-        - original version
+0.01  2010-12-16T18:10:52+09:00
+      - initial release
+

@@ -37,7 +37,8 @@ if ($use_local_framework) {
     };
 }
 else {
-    cc_append_to_ccflags sprintf '-I%s', File::Spec->catfile('share', 'Growl.framework', 'Headers');
+    cc_append_to_ccflags sprintf '-I%s',
+        File::Spec->rel2abs(File::Spec->catfile('share', 'Growl.framework', 'Versions', 'A', 'Headers'));
 
     makemaker_args->{dynamic_lib} = {
         OTHERLDFLAGS => '-framework Foundation',
