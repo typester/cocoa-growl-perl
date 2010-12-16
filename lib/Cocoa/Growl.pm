@@ -26,7 +26,10 @@ sub growl_notify {
     my $description = $info{description} || '';
     my $notifName   = $info{notificationName} || '';
 
-    _growl_notify($title, $description, $notifName);
+    my $on_click   = $info{onClick};
+    my $on_timeout = $info{onTimeout};
+
+    _growl_notify($title, $description, $notifName, undef, $on_click, $on_timeout);
 }
 
 sub growl_register {

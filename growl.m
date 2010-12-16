@@ -13,12 +13,30 @@
 
 static Class GrowlAppBridge;
 
+@interface GrowlContext : NSObject {
+@public
+    SV* timeout_cb;
+    SV* click_cb;
+}
+@end
+
+@implementation GrowlContext
+-(void)dealloc {
+    if (NULL != timeout_cb) SvREFCNT_dec(timeout_cb);
+    if (NULL != click_cb) SvREFCNT_dec(click_cb);
+    [super dealloc];
+}
+@end
+
 @interface Growl : NSObject <GrowlApplicationBridgeDelegate> {
     NSDictionary* info_;
+    NSMutableDictionary* contexts_;
 }
 +(Growl*)sharedInstance;
 -(NSDictionary*)info;
 -(void)setInfo:(NSDictionary*)newInfo;
+-(NSString*)addContext:(GrowlContext*)context;
+-(void)removeContext:(NSString*)key;
 @end
 
 @implementation Growl
@@ -27,9 +45,16 @@ static Class GrowlAppBridge;
     static Growl* obj = nil;
     if (nil == obj) {
         obj = [[Growl alloc] init];
-        [obj setInfo:nil];
     }
     return obj;
+}
+
+-(id)init {
+    if (self = [super init]) {
+        info_ = nil;
+        contexts_ = [[NSMutableDictionary dictionary] retain];
+    }
+    return self;
 }
 
 -(NSDictionary*)info {
@@ -43,12 +68,76 @@ static Class GrowlAppBridge;
     info_ = [newInfo retain];
 }
 
+-(NSString*)addContext:(GrowlContext*)context {
+    // create dic key
+    CFUUIDRef uuid_ref = CFUUIDCreate(nil);
+    NSString* uuid = (NSString*)CFUUIDCreateString(nil, uuid_ref);
+    CFRelease(uuid_ref);
+
+    [contexts_ setObject:context forKey:uuid];
+
+    return [uuid autorelease];
+}
+
+-(void)removeContext:(NSString*)key {
+    [contexts_ removeObjectForKey:key];
+}
+
 -(NSDictionary*)registrationDictionaryForGrowl {
     return info_;
 }
 
+-(void)growlNotificationWasClicked:(id)clickContext {
+    GrowlContext* context = [contexts_ objectForKey:(NSString*)clickContext];
+    if (context && context->click_cb) {
+        dSP;
+
+        ENTER;
+        SAVETMPS;
+
+        PUSHMARK(SP);
+        PUTBACK;
+
+        call_sv(context->click_cb, G_SCALAR);
+
+        SPAGAIN;
+
+        PUTBACK;
+        FREETMPS;
+        LEAVE;
+    }
+
+    [self removeContext:clickContext];
+    [context release];
+}
+
+-(void)growlNotificationTimedOut:(id)clickContext {
+    GrowlContext* context = [contexts_ objectForKey:(NSString*)clickContext];
+    if (context && context->timeout_cb) {
+        dSP;
+
+        ENTER;
+        SAVETMPS;
+
+        PUSHMARK(SP);
+        PUTBACK;
+
+        call_sv(context->timeout_cb, G_SCALAR);
+
+        SPAGAIN;
+
+        PUTBACK;
+        FREETMPS;
+        LEAVE;
+    }
+
+    [self removeContext:clickContext];
+    [context release];
+}
+
 -(void)dealloc {
     [info_ release];
+    [contexts_ release];
     [super dealloc];
 }
 
@@ -163,12 +252,17 @@ XS(growl_notify) {
     dXSARGS;
 
     if (items < 3) {
-        Perl_croak(aTHX_ "Usage: _growl_notify($title, $description, $name)");
+        Perl_croak(aTHX_ "Usage: _growl_notify($title, $description, $name[, $icon, $click_callback, $timeout_callback])");
     }
 
     SV* sv_title = ST(0);
     SV* sv_desc  = ST(1);
     SV* sv_name  = ST(2);
+
+    SV* sv_click_callback = NULL;
+    SV* sv_timeout_callback = NULL;
+    if (items >= 5 && SvOK(ST(4))) sv_click_callback = ST(4);
+    if (items >= 6 && SvOK(ST(5))) sv_timeout_callback = ST(5);
 
     STRLEN len;
     char* s;
@@ -186,13 +280,25 @@ XS(growl_notify) {
 
     [GrowlAppBridge setGrowlDelegate:[Growl sharedInstance]];
 
+    NSString* context_key = nil;
+    if (sv_click_callback || sv_timeout_callback) {
+        GrowlContext* context = [[GrowlContext alloc] init];
+        context->click_cb = sv_click_callback;
+        context->timeout_cb = sv_timeout_callback;
+
+        if (sv_click_callback) SvREFCNT_inc(sv_click_callback);
+        if (sv_timeout_callback) SvREFCNT_inc(sv_timeout_callback);
+
+        context_key = [[Growl sharedInstance] addContext:context];
+    }
+
     [GrowlAppBridge notifyWithTitle:title
                         description:description
                    notificationName:name
                            iconData:nil
                            priority:0
                            isSticky:NO
-                       clickContext:nil];
+                       clickContext:context_key];
 
     [pool drain];
 
