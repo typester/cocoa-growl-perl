@@ -2,7 +2,9 @@ package Cocoa::Growl;
 use strict;
 use warnings;
 use parent 'Exporter';
+
 use XSLoader;
+use URI;
 
 our $VERSION = '0.01';
 
@@ -36,10 +38,17 @@ sub growl_register {
     my %info = @_;
 
     my $appName  = $info{appName} || __PACKAGE__;
+    my $appIcon  = $info{appIcon};
     my $all      = $info{allNotifications};
     my $defaults = $info{defaultNotifications} || $all;
 
-    _growl_register($appName, $all, $defaults);
+    if ($appIcon) {
+        my $uri = URI->new($appIcon);
+        $uri->scheme or do { $uri->scheme('file'); $uri->host('') };
+        $appIcon = $uri->as_string;
+    }
+
+    _growl_register($appName, $all, $defaults, $appIcon);
 }
 
 1;

@@ -191,6 +191,8 @@ XS(growl_register) {
     SV* sv_appName = ST(0);
     SV* sv_allNotif = ST(1);
     SV* sv_defaultNotif = ST(2);
+    SV* sv_image = NULL;
+    if (items >= 4) sv_image = ST(3);
 
     if (!SvROK(sv_allNotif) || !SvROK(sv_defaultNotif) ||
         SVt_PVAV != SvTYPE(SvRV(sv_allNotif)) ||
@@ -206,6 +208,14 @@ XS(growl_register) {
 
     ptr = SvPV(sv_appName, len);
     NSString* appName = [NSString stringWithUTF8String:ptr];
+
+    NSData* icon = nil;
+    if (sv_image && SvOK(sv_image)) {
+        ptr = SvPV(sv_image, len);
+        NSString* iconFile = [NSString stringWithUTF8String:ptr];
+        NSURL* url = [NSURL URLWithString:iconFile];
+        icon = [NSData dataWithContentsOfURL:url];
+    }
 
     SV** svp;
     AV* av;
@@ -233,13 +243,26 @@ XS(growl_register) {
         }
     }
 
-    NSDictionary* info = [NSDictionary dictionaryWithObjectsAndKeys:
+    NSDictionary* info;
+    if (icon) {
+        info = [NSDictionary dictionaryWithObjectsAndKeys:
+                                            [NSNumber numberWithInt:1],     GROWL_TICKET_VERSION,
+                                            @"org.unknownplace.cocoagrowl", GROWL_APP_ID,
+                                            appName,                        GROWL_APP_NAME,
+                                            all,                            GROWL_NOTIFICATIONS_ALL,
+                                            defaults,                       GROWL_NOTIFICATIONS_DEFAULT,
+                                            icon,                           GROWL_APP_ICON,
+                                       nil];
+    }
+    else {
+        info = [NSDictionary dictionaryWithObjectsAndKeys:
                                             [NSNumber numberWithInt:1],     GROWL_TICKET_VERSION,
                                             @"org.unknownplace.cocoagrowl", GROWL_APP_ID,
                                             appName,                        GROWL_APP_NAME,
                                             all,                            GROWL_NOTIFICATIONS_ALL,
                                             defaults,                       GROWL_NOTIFICATIONS_DEFAULT,
                                        nil];
+    }
 
     [[Growl sharedInstance] setInfo:info];
 

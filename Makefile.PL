@@ -15,6 +15,7 @@ name 'Cocoa-Growl';
 all_from 'lib/Cocoa/Growl.pm';
 
 requires 'parent';
+requires 'URI';
 
 test_requires 'Test::More' => '0.88';
 author_tests('xt');
