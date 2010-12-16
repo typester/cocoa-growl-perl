@@ -26,13 +26,13 @@ sub growl_notify {
 
     my $title       = $info{title} || '';
     my $description = $info{description} || '';
-    my $notifName   = $info{notificationName} || '';
+    my $notifName   = $info{name} || '';
     my $icon        = $info{icon};
     my $sticky      = $info{sticky};
     my $priority    = $info{priority} || 0;
 
-    my $on_click   = $info{onClick};
-    my $on_timeout = $info{onTimeout};
+    my $on_click   = $info{on_click};
+    my $on_timeout = $info{on_timeout};
 
     if ($icon) {
         my $uri = URI->new($icon);
@@ -46,10 +46,10 @@ sub growl_notify {
 sub growl_register {
     my %info = @_;
 
-    my $appName  = $info{appName} || __PACKAGE__;
-    my $appIcon  = $info{appIcon};
-    my $all      = $info{allNotifications};
-    my $defaults = $info{defaultNotifications} || $all;
+    my $appName  = $info{app} || __PACKAGE__;
+    my $appIcon  = $info{icon};
+    my $all      = $info{notifications};
+    my $defaults = $info{defaults} || $all;
 
     if ($appIcon) {
         my $uri = URI->new($appIcon);
@@ -64,9 +64,11 @@ sub growl_register {
 
 __END__
 
+=for stopwords NSRunLoop Str
+
 =head1 NAME
 
-Cocoa::Growl - Module abstract (<= 44 characters) goes here
+Cocoa::Growl - Yet another growl module using Growl.framework
 
 =head1 SYNOPSIS
 
@@ -75,26 +77,169 @@ Cocoa::Growl - Module abstract (<= 44 characters) goes here
     my $installed = growl_installed(); # true if Growl is installed.
     my $running   = growl_running();   # true if Growl is running.
     
-    # register notifications
+    # register application
     growl_register(
-        appName          => 'My growl script',
-        allNotifications => [qw(Notification1 Notification2)],
+        name          => 'My growl script',
+        icon          => '/path/to/icon.png', # or 'http://url/to/icon'
+        notifications => [qw(Notification1 Notification2)],
     );
     
     # show growl notification
     growl_notify(
-        notificationName => 'Notification1',
-        title            => 'Hello!',
-        description      => 'Growl world!',
+        name        => 'Notification1',
+        title       => 'Hello!',
+        description => 'Growl world!',
     );
 
 =head1 DESCRIPTION
 
-Stub documentation for this module was created by ExtUtils::ModuleMaker.
-It looks like the author of the extension was negligent enough
-to leave the stub unedited.
+=head1 FUNCTIONS
 
-Blah blah blah.
+All functions 
+
+=head2 growl_installed
+
+    my $installed = growl_installed();
+
+Return true value if growl is installed.
+
+=head2 growl_running
+
+    my $running = growl_running();
+
+Return true value if growl is running.
+
+=head2 growl_register(%parameters)
+
+Register application to growl.
+
+    growl_register(
+        name          => 'My growl script',
+        icon          => '/path/to/icon.png', # or 'http://url/to/icon'
+        notifications => [qw(Notification1 Notification2)],
+    );
+
+Available parameters are:
+
+=over 4
+
+=item * app => 'Str' (Required)
+
+The name of the application. 
+This is listed in Growl preference panel.
+
+=item * icon => 'Str'
+
+Application icon image path or URL. This image is showed in Growl preference panel, and used notification default image.
+
+=item * notifications => 'ArrayRef' (Required)
+
+List of notification names.
+These names will be displayed in Growl preference pane to let users customize options for each notification.
+
+=item * defaults => 'ArrayRef'
+
+List of notification names to enable by default.
+If this parameter is not set, all notifications is to become default.
+
+=back
+
+=head2 growl_notify(%parameters)
+
+Show growl notify.
+
+    growl_notify(
+        name        => 'Notification1',
+        title       => 'Hello!',
+        description => 'Growl world!',
+    );
+
+Available options are:
+
+=over 4
+
+=item * name => 'Str' (Required)
+
+The internal name of the notification. Should be human-readable, as it will be displayed in the Growl preference pane.
+And this value is required to be registered by C<growl_register> before calling this function.
+
+=item * title => 'Str'
+
+The title of the notification displayed to the user.
+
+=item * description => 'Str'
+
+The full description of the notification displayed to the user.
+
+=item * icon => 'Str'
+
+Image file path or URL to show with the notification as its icon. If this value is not set, the application's icon will be used instead.
+
+=item * sticky => 'Bool'
+
+If true value is set, the notification will remain on screen until clicked.
+Not all Growl displays support sticky notifications.
+
+=item * priority => 'Int'
+
+The priority of the notification. The default value is 0; positive values are higher priority and negative values are lower priority.
+Not all Growl displays support priority.
+
+=item * on_click => 'CodeRef',
+
+This callback is called when notification is clicked.
+See also CALLBACK NOTICE below.
+
+=item * on_timeout => 'CodeRef',
+
+This callback is called when notification is timeout. (also called notification closed by close button)
+
+=back
+
+=head3 CALLBACK NOTICE
+
+You should run NSRunLoop to be enable callbacks.
+Most easily way to do that at this point, just use this module with L<AnyEvent> and L<AnyEvent::Impl::NSRunLoop>.
+
+This is little example:
+
+    use AnyEvent;
+    use AnyEvent::Impl::NSRunLoop;
+    
+    use Cocoa::Growl ':all';;
+    
+    my $cv = AnyEvent->condvar;
+    
+    growl_register(
+        name          => 'test script',
+        notifications => ['test notification'],
+    );
+    
+    growl_notify(
+        name        => 'test notification',
+        title       => 'Hello',
+        description => 'Growl World!',
+        onClick => sub {
+            warn 'click';
+            $cv->send;
+        },
+        onTimeout => sub {
+            warn 'timeout';
+            $cv->send;
+        },
+    );
+    
+    $cv->recv;
+
+This script show one notification and wait until notification closed.
+
+=head1 USE YOUR OWN Growl.framework
+
+Although this module bundle Growl.framework and load it by default, you can load your own Growl.framework.
+To do that, save your Growl.framework to C</Library/Frameworks/Growl.framework/>, and add C<USE_LOCAL_GROWL_FRAMEWORK=1> option when run Makefile.PL
+
+    perl Makefile.PL USE_LOCAL_GROWL_FRAMEWORK=1
+
 
 =head1 AUTHOR
 
@@ -102,7 +247,7 @@ Daisuke Murase <typester@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2009 by KAYAC Inc.
+Copyright (c) 2010 by KAYAC Inc.
 
 This program is free software; you can redistribute
 it and/or modify it under the same terms as Perl itself.
