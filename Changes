@@ -1,5 +1,8 @@
 Revision history for Perl extension Cocoa::Growl
 
+0.03  2010-12-17T13:38:18+09:00
+      - fix compilation error with OSX system perl.
+
 0.02  2010-12-16T20:58:09+09:00
       - fix documents
 

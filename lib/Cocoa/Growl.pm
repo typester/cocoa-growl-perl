@@ -6,7 +6,7 @@ use parent 'Exporter';
 use XSLoader;
 use URI;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 our @EXPORT_OK   = qw(growl_installed growl_running growl_register growl_notify);
 our %EXPORT_TAGS = (all => \@EXPORT_OK);
