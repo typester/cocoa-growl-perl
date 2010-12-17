@@ -3,11 +3,6 @@
 #include "XSUB.h"
 #include "ppport.h"
 
-#ifdef __ppc__
-// workaround for ppc compile error, i don't know correct way...
-#define __QUICKDRAWAPI__
-#endif
-
 #import <Foundation/Foundation.h>
 #ifdef USE_LOCAL_GROWL
 #import <Growl/Growl.h>
