@@ -16,6 +16,7 @@ all_from 'lib/Cocoa/Growl.pm';
 
 requires 'parent';
 requires 'URI';
+requires 'File::ShareDir';
 
 test_requires 'Test::More' => '0.88';
 author_tests('xt');
