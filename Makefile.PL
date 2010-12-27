@@ -13,6 +13,7 @@ use File::Spec;
 
 name 'Cocoa-Growl';
 all_from 'lib/Cocoa/Growl.pm';
+readme_from 'lib/Cocoa/Growl.pm';
 
 requires 'parent';
 requires 'URI';

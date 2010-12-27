@@ -64,7 +64,7 @@ sub growl_register {
 
 __END__
 
-=for stopwords NSRunLoop Str
+=for stopwords NSRunLoop Str AnyEvent
 
 =head1 NAME
 
@@ -199,8 +199,36 @@ This callback is called when notification is timeout. (also called notification 
 
 =head3 CALLBACK NOTICE
 
-You should run NSRunLoop to be enable callbacks.
-Most easily way to do that at this point, just use this module with L<AnyEvent> and L<AnyEvent::Impl::NSRunLoop>.
+You should run Cocoa's event loop NSRunLoop to be enable callbacks.
+Simplest way to do that is use this module with L<Cocoa::EventLoop>.
+
+    use Cocoa::EventLoop;
+    use Cocoa::Growl ':all';
+    
+    growl_register(
+        name          => 'test script',
+        notifications => ['test notification'],
+    );
+    
+    my $wait = 1;
+    growl_notify(
+        name        => 'test notification',
+        title       => 'Hello',
+        description => 'Growl World!',
+        onClick => sub {
+            warn 'click';
+            $wait = 0;
+        },
+        onTimeout => sub {
+            warn 'timeout';
+            $want = 0;
+        },
+    );
+    
+    Cocoa::EventLoop->run_while(0.1) while unless $wait;
+
+If you want to write more complicated script, use L<AnyEvent> and L<AnyEvent::Impl::NSRunLoop>.
+L<AnyEvent::Impl::NSRunLoop> is a wrapper for L<AnyEvent> and L<Cocoa::EventLoop> and by using this module, you can use cocoa's event loop transparently in your AnyEvent application.
 
 This is little example:
 
