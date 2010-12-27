@@ -1,5 +1,8 @@
 Revision history for Perl extension Cocoa::Growl
 
+0.04  2010-12-27T10:24:54+09:00
+      - added missing dependency, File::ShareDir.
+
 0.03  2010-12-17T13:38:18+09:00
       - fix compilation error with OSX system perl.
 
