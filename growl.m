@@ -3,6 +3,9 @@
 #include "XSUB.h"
 #include "ppport.h"
 
+// undefine Move macro, this is conflict to Mac OS X QuickDraw API.
+#undef Move
+
 #import <Foundation/Foundation.h>
 #ifdef USE_LOCAL_GROWL
 #import <Growl/Growl.h>
