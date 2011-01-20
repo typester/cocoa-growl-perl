@@ -22,6 +22,7 @@ SYNOPSIS
         );
 
 DESCRIPTION
+FUNCTIONS
     No function is exported by default, but all functions is exportable. And
     ':all' tag export all functions.
 
@@ -172,11 +173,4 @@ COPYRIGHT AND LICENSE
 
     The full text of the license can be found in the LICENSE file included
     with this module.
-
-POD ERRORS
-    Hey! The above document had some coding errors, which are explained
-    below:
-
-    Around line 97:
-        Unknown directive: =Growl
 
